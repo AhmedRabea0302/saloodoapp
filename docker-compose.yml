@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  # DATABASE
+  db:
+    container_name: db
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: saloodo
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "9906:3306"
+    volumes:
+      - ./my-datavolume:/var/lib/mysql
+
+  # Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: api
+    depends_on:
+      - db
+    volumes:
+      - ./app/:/var/www/html/
+    ports:
+      - "8000:80"
+    stdin_open: true
+    tty: true
+    entrypoint: sh -c "apache2-foreground && php -S http://localhost:800 -t /"
+
+  # FRONTEND
+  frontend:
+    build: ./frontend
+    ports:
+      - 3000:3000
+
+  # PHPMYADMIN
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "8080:80"
+    restart: always
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      - db
